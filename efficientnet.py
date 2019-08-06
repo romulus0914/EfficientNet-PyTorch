@@ -25,19 +25,14 @@ def _RoundChannels(c, divisor=8, min_value=None):
 def _RoundRepeats(r):
     return int(math.ceil(r))
 
-def _DropConnect(inputs, drop_connect_rate, is_training):
-    if not is_training:
-        return inputs
+def _DropPath(x, drop_prob):
+    if drop_prob > 0:
+        keep_prob = 1 - drop_prob
+        mask = torch.cuda.tensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+        x.div_(keep_prob)
+        x.mul_(mask)
 
-    keep_prob = 1 - drop_connect_rate
-
-    batch_size = inputs.size(0)
-    random_tensor = keep_prob
-    random_tensor += torch.rand((batch_size, 1, 1, 1))
-    binary_tensor = torch.floor(random_tensor)
-    outputs = (inputs / keep_prob) * binary_tensor
-
-    return outputs
+    return x
 
 def _BatchNorm(channels, eps=1e-3, momentum=0.99):
     return nn.BatchNorm2d(channels, eps=eps, momentum=momentum)
@@ -131,7 +126,7 @@ class MBConvBlock(nn.Module):
 
     def forward(self, x):
         if self.residual_connection:
-            return x + _DropConnect(self.conv(x), self.drop_connect_rate, self.training)
+            return x + _DropPath(self.conv(x), self.drop_connect_rate, self.training)
         else:
             return self.conv(x)
 
