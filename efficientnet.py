@@ -25,10 +25,13 @@ def _RoundChannels(c, divisor=8, min_value=None):
 def _RoundRepeats(r):
     return int(math.ceil(r))
 
-def _DropPath(x, drop_prob):
-    if drop_prob > 0:
+def _DropPath(x, drop_prob, training):
+    if drop_prob > 0 and training:
         keep_prob = 1 - drop_prob
-        mask = torch.cuda.tensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+        if x.is_cuda:
+            mask = Variable(torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+        else:
+            mask = Variable(torch.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
         x.div_(keep_prob)
         x.mul_(mask)
 
@@ -74,14 +77,14 @@ class SqueezeAndExcite(nn.Module):
         return y
 
 class MBConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride, expand_ratio, se_ratio, drop_connect_rate):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, expand_ratio, se_ratio, drop_path_rate):
         super(MBConvBlock, self).__init__()
 
         expand = (expand_ratio != 1)
         expand_channels = in_channels * expand_ratio
         se = (se_ratio != 0.0)
         self.residual_connection = (stride == 1 and in_channels == out_channels)
-        self.drop_connect_rate = drop_connect_rate
+        self.drop_path_rate = drop_path_rate
 
         conv = []
 
@@ -126,7 +129,7 @@ class MBConvBlock(nn.Module):
 
     def forward(self, x):
         if self.residual_connection:
-            return x + _DropPath(self.conv(x), self.drop_connect_rate, self.training)
+            return x + _DropPath(self.conv(x), self.drop_path_rate, self.training)
         else:
             return self.conv(x)
 
