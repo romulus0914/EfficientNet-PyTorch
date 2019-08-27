@@ -55,10 +55,10 @@ def _Conv1x1Bn(in_channels, out_channels):
     )
 
 class SqueezeAndExcite(nn.Module):
-    def __init__(self, channels, se_ratio):
+    def __init__(self, channels, squeeze_channels, se_ratio):
         super(SqueezeAndExcite, self).__init__()
 
-        squeeze_channels = channels * se_ratio
+        squeeze_channels = squeeze_channels * se_ratio
         if not squeeze_channels.is_integer():
             raise ValueError('channels must be divisible by 1/ratio')
 
@@ -115,7 +115,7 @@ class MBConvBlock(nn.Module):
 
         if se:
             # squeeze and excite
-            squeeze_excite = nn.Sequential(SqueezeAndExcite(expand_channels, se_ratio))
+            squeeze_excite = SqueezeAndExcite(expand_channels, in_channels, se_ratio)
             conv.append(squeeze_excite)
 
         # projection phase
