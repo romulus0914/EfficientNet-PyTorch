@@ -187,8 +187,8 @@ class EfficientNet(nn.Module):
         # last several layers
         self.head_conv = _Conv1x1Bn(self.config[-1][1], feature_size)
         #self.avgpool = nn.AvgPool2d(input_size//32, stride=1)
-        self.classifier = nn.Linear(feature_size, num_classes)
         self.dropout = nn.Dropout(param[3])
+        self.classifier = nn.Linear(feature_size, num_classes)
 
         self._initialize_weights()
 
@@ -199,8 +199,8 @@ class EfficientNet(nn.Module):
         #x = self.avgpool(x)
         #x = x.view(x.size(0), -1)
         x = torch.mean(x, (2, 3))
-        x = self.classifier(x)
         x = self.dropout(x)
+        x = self.classifier(x)
 
         return x
 
