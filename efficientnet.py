@@ -37,7 +37,7 @@ def _DropPath(x, drop_prob, training):
 
     return x
 
-def _BatchNorm(channels, eps=1e-3, momentum=0.99):
+def _BatchNorm(channels, eps=1e-3, momentum=0.01):
     return nn.BatchNorm2d(channels, eps=eps, momentum=momentum)
 
 def _Conv3x3Bn(in_channels, out_channels, stride):
